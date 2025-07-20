@@ -11,11 +11,12 @@
 - **허브 통신**: HTTPS를 통한 안전한 허브-에이전트 통신
 - **멀티 에이전트**: 단일 서버에서 여러 에이전트 인스턴스 실행
 - **크로스 플랫폼**: Windows, Linux, macOS 지원
+- **MCP 통합**: Model Context Protocol을 통한 GitHub API 연동
 
 ## 시스템 요구사항
 
 - Node.js v18 이상
-- Chrome 또는 Chromium 브라우저
+- Google Chrome 브라우저 (설치 스크립트 포함)
 - 최소 2GB RAM (에이전트당)
 - 최소 1GB 디스크 공간
 

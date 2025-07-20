@@ -21,13 +21,49 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 # 설치 디렉토리 설정
-INSTALL_DIR="${HOME}/crawler-agent"
+DEFAULT_INSTALL_DIR="${HOME}/crawler-agent"
 SOURCE_SERVER="YOUR_SERVER_IP:8080"
 
 # 기존 설치 확인
 EXISTING_INSTALL=false
 UPDATE_MODE=false
 BACKUP_ENV=false
+
+# 설치 디렉토리 확인 및 선택
+if [ -d "$DEFAULT_INSTALL_DIR" ]; then
+    echo -e "${YELLOW}⚠️  기존 디렉토리가 발견되었습니다: $DEFAULT_INSTALL_DIR${NC}"
+    echo "선택하세요:"
+    echo "1) 기존 설치 업데이트"
+    echo "2) 새로운 디렉토리에 설치"
+    echo "3) 취소"
+    read -p "선택 [1-3]: " choice
+    
+    case $choice in
+        1)
+            INSTALL_DIR="$DEFAULT_INSTALL_DIR"
+            UPDATE_MODE=true
+            EXISTING_INSTALL=true
+            ;;
+        2)
+            read -p "새 설치 디렉토리 경로 (예: ${HOME}/crawler-agent-2): " NEW_DIR
+            if [ -z "$NEW_DIR" ]; then
+                echo -e "${RED}디렉토리를 입력하지 않았습니다. 취소합니다.${NC}"
+                exit 1
+            fi
+            INSTALL_DIR="$NEW_DIR"
+            ;;
+        3)
+            echo -e "${YELLOW}설치를 취소합니다.${NC}"
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}잘못된 선택입니다. 취소합니다.${NC}"
+            exit 1
+            ;;
+    esac
+else
+    INSTALL_DIR="$DEFAULT_INSTALL_DIR"
+fi
 
 if [ -d "$INSTALL_DIR" ]; then
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
@@ -96,24 +132,69 @@ else
     fi
 fi
 
-echo -e "${YELLOW}2. 기본 패키지 설치 중...${NC}"
+echo -e "${YELLOW}2. Chrome 브라우저 설치 확인 중...${NC}"
 
-# 시스템 업데이트 및 기본 패키지 설치 (Node.js 제외)
+# Chrome 브라우저 확인
+CHROME_INSTALLED=false
+if command -v google-chrome &> /dev/null || command -v google-chrome-stable &> /dev/null; then
+    CHROME_VERSION=$(google-chrome --version 2>/dev/null || google-chrome-stable --version 2>/dev/null)
+    echo -e "${GREEN}✓ Google Chrome이 이미 설치되어 있습니다: $CHROME_VERSION${NC}"
+    CHROME_INSTALLED=true
+else
+    echo -e "${YELLOW}Google Chrome이 설치되어 있지 않습니다. 설치를 진행합니다...${NC}"
+    
+    if command -v apt-get &> /dev/null; then
+        # Ubuntu/Debian - Chrome 설치
+        echo "Chrome 저장소 추가 중..."
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓ Google Chrome 설치 완료${NC}"
+            CHROME_INSTALLED=true
+        else
+            echo -e "${RED}Chrome 설치 실패. Chromium으로 대체합니다.${NC}"
+            sudo apt-get install -y chromium-browser
+        fi
+    elif command -v yum &> /dev/null; then
+        # CentOS/RHEL - Chrome 설치
+        cat << EOF | sudo tee /etc/yum.repos.d/google-chrome.repo
+[google-chrome]
+name=google-chrome
+baseurl=http://dl.google.com/linux/chrome/rpm/stable/x86_64
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+EOF
+        sudo yum install -y google-chrome-stable
+    elif command -v dnf &> /dev/null; then
+        # Fedora - Chrome 설치
+        sudo dnf install -y fedora-workstation-repositories
+        sudo dnf config-manager --set-enabled google-chrome
+        sudo dnf install -y google-chrome-stable
+    fi
+fi
+
+echo -e "${YELLOW}3. 기본 패키지 설치 중...${NC}"
+
+# 시스템 업데이트 및 기본 패키지 설치
 if command -v apt-get &> /dev/null; then
     # Ubuntu/Debian
     sudo apt-get update
-    sudo apt-get install -y curl wget git unzip chromium-browser
+    sudo apt-get install -y curl wget git unzip
 elif command -v yum &> /dev/null; then
     # CentOS/RHEL
     sudo yum update -y
-    sudo yum install -y curl wget git unzip chromium
+    sudo yum install -y curl wget git unzip
 elif command -v dnf &> /dev/null; then
     # Fedora
     sudo dnf update -y
-    sudo dnf install -y curl wget git unzip chromium
+    sudo dnf install -y curl wget git unzip
 fi
 
-echo -e "${YELLOW}3. Node.js 버전 최종 확인 중...${NC}"
+echo -e "${YELLOW}4. Node.js 버전 최종 확인 중...${NC}"
 
 # Node.js 버전 최종 확인
 NODE_VERSION=$(node -v | cut -d'v' -f2 2>/dev/null)
@@ -132,9 +213,9 @@ fi
 echo -e "${GREEN}✓ Node.js v$NODE_VERSION 확인됨${NC}"
 
 if [ "$UPDATE_MODE" = true ]; then
-    echo -e "${YELLOW}4. 에이전트 파일 업데이트 중...${NC}"
+    echo -e "${YELLOW}5. 에이전트 파일 업데이트 중...${NC}"
 else
-    echo -e "${YELLOW}4. 에이전트 파일 다운로드 중...${NC}"
+    echo -e "${YELLOW}5. 에이전트 파일 다운로드 중...${NC}"
 fi
 
 # 설치 디렉토리 생성
@@ -254,7 +335,7 @@ if [ ! -d "scripts" ]; then
     fi
 fi
 
-echo -e "${YELLOW}5. 의존성 확인 및 설치 중...${NC}"
+echo -e "${YELLOW}6. 의존성 확인 및 설치 중...${NC}"
 
 # package.json 존재 확인
 if [ ! -f "package.json" ]; then
@@ -286,7 +367,7 @@ else
     echo -e "${GREEN}✓ 의존성 설치 완료${NC}"
 fi
 
-echo -e "${YELLOW}6. 환경 설정 중...${NC}"
+echo -e "${YELLOW}7. 환경 설정 중...${NC}"
 
 # .env 파일 처리
 if [ "$UPDATE_MODE" = true ] && [ "$BACKUP_ENV" = true ]; then
@@ -294,11 +375,25 @@ if [ "$UPDATE_MODE" = true ] && [ "$BACKUP_ENV" = true ]; then
     echo -e "${YELLOW}새로운 설정은 .env.example을 참고하세요${NC}"
 elif [ ! -f ".env" ]; then
     echo "기본 .env 파일 생성 중..."
+    
+    # 에이전트 ID 입력
+    echo -e "${YELLOW}에이전트 ID를 설정하세요.${NC}"
+    echo "여러 위치에서 설치하는 경우 각각 다른 ID를 사용해야 합니다."
+    
+    # 호스트명 가져오기
+    HOSTNAME=$(hostname)
+    DEFAULT_AGENT_ID="agent-${HOSTNAME}-$(date +%s | tail -c 5)"
+    
+    read -p "에이전트 ID [기본값: $DEFAULT_AGENT_ID]: " AGENT_ID_INPUT
+    AGENT_ID="${AGENT_ID_INPUT:-$DEFAULT_AGENT_ID}"
+    
+    echo -e "${GREEN}✓ 에이전트 ID: $AGENT_ID${NC}"
+    
     # .env 파일 생성
     cat > .env << EOF
 # Agent Configuration
 PORT=3001
-AGENT_ID=agent-1
+AGENT_ID=$AGENT_ID
 BIND_ADDRESS=0.0.0.0
 
 # Hub Connection
@@ -332,7 +427,7 @@ mkdir -p logs data/users
 
 echo -e "${GREEN}✓ 환경 설정 완료${NC}"
 
-echo -e "${YELLOW}7. 권한 설정 중...${NC}"
+echo -e "${YELLOW}8. 권한 설정 중...${NC}"
 
 # 스크립트 실행 권한 부여
 chmod +x scripts/*.sh
