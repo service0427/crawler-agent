@@ -72,18 +72,34 @@ cd "$INSTALL_DIR"
 # 에이전트 소스 다운로드
 echo "소스 파일 다운로드 중..."
 curl -f -o crawler-agent.tar.gz "http://${SOURCE_SERVER}/crawler-agent.tar.gz" || {
-    echo -e "${RED}소스 파일 다운로드 실패${NC}"
-    echo "다음 방법 중 하나를 사용하세요:"
-    echo "1. 직접 파일 복사:"
-    echo "   scp -r user@220.78.239.115:/home/tech/crawler/agent/* ."
-    echo "2. GitHub에서 클론:"
-    echo "   git clone https://github.com/yourusername/crawler-agent.git ."
-    exit 1
+    echo -e "${YELLOW}소스 파일 다운로드 실패, GitHub에서 다운로드 시도 중...${NC}"
+    
+    # GitHub에서 직접 클론
+    if command -v git &> /dev/null; then
+        git clone https://github.com/service0427/crawler-agent.git temp-clone
+        if [ -d "temp-clone" ]; then
+            mv temp-clone/* . 2>/dev/null || true
+            mv temp-clone/.* . 2>/dev/null || true
+            rm -rf temp-clone
+            echo -e "${GREEN}✓ GitHub에서 다운로드 완료${NC}"
+        else
+            echo -e "${RED}GitHub 클론 실패${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}Git이 설치되지 않았습니다.${NC}"
+        echo "다음 방법을 사용하세요:"
+        echo "1. Git 설치 후 재시도"
+        echo "2. 수동으로 클론: git clone https://github.com/service0427/crawler-agent.git"
+        exit 1
+    fi
 }
 
-# 압축 해제
-tar -xzf crawler-agent.tar.gz --strip-components=1
-rm crawler-agent.tar.gz
+# 압축 해제 (tar.gz 파일이 있는 경우만)
+if [ -f "crawler-agent.tar.gz" ]; then
+    tar -xzf crawler-agent.tar.gz --strip-components=1
+    rm crawler-agent.tar.gz
+fi
 
 # scripts 폴더 존재 확인
 if [ ! -d "scripts" ]; then

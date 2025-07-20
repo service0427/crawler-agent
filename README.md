@@ -19,23 +19,38 @@
 
 ## 빠른 시작
 
-### Linux/macOS
+### 방법 1: 원격 설치 (가장 빠름)
+
+```bash
+# 원격 스크립트로 자동 설치
+curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash
+
+# 설치 후 환경 설정
+cd ~/crawler-agent
+cp .env.example .env
+nano .env  # HUB_SECRET을 실제 키로 변경
+
+# 에이전트 실행
+./scripts/manage.sh
+```
+
+### 방법 2: Git 클론 후 설치
 
 ```bash
 # 저장소 클론
-git clone https://github.com/yourusername/crawler-agent.git
+git clone https://github.com/service0427/crawler-agent.git
 cd crawler-agent
 
-# 설치 스크립트 실행
-./scripts/install.sh
+# 빠른 설치 (모든 의존성 자동 설치)
+chmod +x install-quick.sh
+./install-quick.sh
 
 # 환경 설정
 cp .env.example .env
-nano .env  # 허브 정보 입력
+nano .env  # HUB_SECRET을 실제 키로 변경
 
-# 단일 에이전트 실행
+# 에이전트 실행
 npm start
-
 # 또는 관리 도구 사용
 ./scripts/manage.sh
 ```
@@ -44,7 +59,7 @@ npm start
 
 ```powershell
 # 저장소 클론
-git clone https://github.com/yourusername/crawler-agent.git
+git clone https://github.com/service0427/crawler-agent.git
 cd crawler-agent
 
 # PowerShell 관리자 권한으로 실행
@@ -53,18 +68,35 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 # 환경 설정
 copy .env.example .env
-notepad .env  # 허브 정보 입력
+notepad .env  # HUB_SECRET을 실제 키로 변경
 
-# 단일 에이전트 실행
+# 에이전트 실행
 npm start
-
-# 또는 배치 파일 사용
-start-agent.bat
 ```
 
-## 환경 설정
+## 🚀 실제 배포용 빠른 가이드
 
-`.env` 파일에서 다음 항목을 설정합니다:
+### Linux 서버에 배포
+
+```bash
+# 1. 자동 설치
+curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash
+
+# 2. 환경 설정 (필수!)
+cd ~/crawler-agent
+cp .env.example .env
+nano .env  # 아래 HUB_SECRET 수정
+
+# 3. 멀티 에이전트 실행
+./scripts/manage.sh  # 메뉴에서 3번 선택
+
+# 4. 서비스로 등록 (선택)
+sudo ./scripts/systemd-setup.sh install-multi
+```
+
+### ⚠️ 필수 설정 항목
+
+`.env` 파일에서 **반드시** 다음 항목을 수정해야 합니다:
 
 ```env
 # 에이전트 설정
@@ -72,8 +104,8 @@ PORT=3001                    # 에이전트 포트
 AGENT_ID=agent-1            # 고유 에이전트 ID
 
 # 허브 연결
-HUB_URL=https://hub.example.com:8443  # 허브 URL
-HUB_SECRET=your-secret-key            # 인증 키
+HUB_URL=https://mkt.techb.kr:8443     # 허브 URL
+HUB_SECRET=your-hub-secret-key        # 인증 키 (실제 키로 교체 필요)
 
 # 브라우저 설정
 HEADLESS=false              # 헤드리스 모드 (true/false)
@@ -296,4 +328,4 @@ crawler-agent/
 
 ## 지원
 
-문제가 발생하거나 질문이 있으시면 [Issues](https://github.com/yourusername/crawler-agent/issues)에 등록해주세요.
+문제가 발생하거나 질문이 있으시면 [Issues](https://github.com/service0427/crawler-agent/issues)에 등록해주세요.
