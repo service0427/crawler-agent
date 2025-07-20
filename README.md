@@ -25,8 +25,11 @@
 ### 원격 설치 (curl 사용)
 
 ```bash
-# 원격 스크립트로 자동 설치
-curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash
+# 방법 1: 대화형 설치 (권장)
+curl -sL https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh -o install.sh && bash install.sh
+
+# 방법 2: 자동 설치 (--auto 옵션)
+curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash -s -- --auto
 
 # 설치 중:
 # - 기존 설치 발견 시 선택 옵션 제공
@@ -81,8 +84,11 @@ npm start
 ### Linux 서버에 배포
 
 ```bash
-# 1. 자동 설치 (curl 명령 하나로 모든 것을 설치)
-curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash
+# 1. 대화형 설치 (권장)
+curl -sL https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh -o install.sh && bash install.sh
+
+# 또는 자동 설치 (모든 기본값 사용)
+curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash -s -- --auto
 
 # 설치 중 입력 항목:
 # - 기존 설치 발견 시: 업데이트(1) 또는 새 디렉토리(2) 선택

@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # 웹 크롤러 에이전트 빠른 설치 스크립트
-# 사용법: curl -s YOUR_SERVER_IP:8080/install-quick.sh | bash
+# 사용법: 
+# curl -sL https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh -o install.sh && bash install.sh
+# 또는
+# wget -qO- https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash -s -- --auto
 
 # 색상 정의
 RED='\033[0;31m'
@@ -29,14 +32,35 @@ EXISTING_INSTALL=false
 UPDATE_MODE=false
 BACKUP_ENV=false
 
+# 자동 모드 확인
+AUTO_MODE=false
+if [ "$1" = "--auto" ]; then
+    AUTO_MODE=true
+fi
+
 # 설치 디렉토리 확인 및 선택
 if [ -d "$DEFAULT_INSTALL_DIR" ]; then
     echo -e "${YELLOW}⚠️  기존 디렉토리가 발견되었습니다: $DEFAULT_INSTALL_DIR${NC}"
-    echo "선택하세요:"
-    echo "1) 기존 설치 업데이트"
-    echo "2) 새로운 디렉토리에 설치"
-    echo "3) 취소"
-    read -p "선택 [1-3]: " choice
+    
+    if [ "$AUTO_MODE" = true ]; then
+        echo "자동 모드: 기존 설치 업데이트"
+        choice="1"
+    else
+        echo "선택하세요:"
+        echo "1) 기존 설치 업데이트"
+        echo "2) 새로운 디렉토리에 설치"
+        echo "3) 취소"
+        
+        if [ -t 0 ]; then
+            read -p "선택 [1-3]: " choice
+        else
+            echo -e "${RED}\n파이프 실행 감지. 다음 명령을 사용하세요:${NC}"
+            echo "curl -sL https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh -o install.sh && bash install.sh"
+            echo "또는 --auto 옵션 사용:"
+            echo "curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash -s -- --auto"
+            exit 1
+        fi
+    fi
     
     case $choice in
         1)
@@ -45,7 +69,12 @@ if [ -d "$DEFAULT_INSTALL_DIR" ]; then
             EXISTING_INSTALL=true
             ;;
         2)
-            read -p "새 설치 디렉토리 경로 (예: ${HOME}/crawler-agent-2): " NEW_DIR
+            if [ -t 0 ]; then
+                read -p "새 설치 디렉토리 경로 (예: ${HOME}/crawler-agent-2): " NEW_DIR
+            else
+                echo -e "${RED}대화형 입력이 불가능합니다.${NC}"
+                exit 1
+            fi
             if [ -z "$NEW_DIR" ]; then
                 echo -e "${RED}디렉토리를 입력하지 않았습니다. 취소합니다.${NC}"
                 exit 1
@@ -379,24 +408,44 @@ if [ "$UPDATE_MODE" = true ] && [ "$BACKUP_ENV" = true ]; then
 elif [ ! -f ".env" ]; then
     echo "기본 .env 파일 생성 중..."
     
-    # 에이전트 ID 입력
-    echo -e "${YELLOW}에이전트 ID를 설정하세요.${NC}"
-    echo "여러 위치에서 설치하는 경우 각각 다른 ID를 사용해야 합니다."
-    
-    # 호스트명 가져오기
+    # 에이전트 ID 설정
     HOSTNAME=$(hostname)
     DEFAULT_AGENT_ID="agent-${HOSTNAME}-$(date +%s | tail -c 5)"
     
-    read -p "에이전트 ID [기본값: $DEFAULT_AGENT_ID]: " AGENT_ID_INPUT
-    AGENT_ID="${AGENT_ID_INPUT:-$DEFAULT_AGENT_ID}"
+    if [ "$AUTO_MODE" = true ]; then
+        AGENT_ID="$DEFAULT_AGENT_ID"
+        echo -e "${YELLOW}자동 모드: 에이전트 ID = $AGENT_ID${NC}"
+    else
+        echo -e "${YELLOW}에이전트 ID를 설정하세요.${NC}"
+        echo "여러 위치에서 설치하는 경우 각각 다른 ID를 사용해야 합니다."
+        
+        if [ -t 0 ]; then
+            read -p "에이전트 ID [기본값: $DEFAULT_AGENT_ID]: " AGENT_ID_INPUT
+            AGENT_ID="${AGENT_ID_INPUT:-$DEFAULT_AGENT_ID}"
+        else
+            echo -e "${RED}대화형 입력 불가. 기본값 사용: $DEFAULT_AGENT_ID${NC}"
+            AGENT_ID="$DEFAULT_AGENT_ID"
+        fi
+    fi
     
     echo -e "${GREEN}✓ 에이전트 ID: $AGENT_ID${NC}"
     
     # 프로덕션 환경 사용 여부 확인
-    echo -e "${YELLOW}프로덕션 허브에 연결하시겠습니까?${NC}"
-    echo "1) 예, 프로덕션 허브 사용 (mkt.techb.kr)"
-    echo "2) 아니오, 커스텀 허브 사용"
-    read -p "선택 [1-2]: " HUB_CHOICE
+    if [ "$AUTO_MODE" = true ]; then
+        echo -e "${YELLOW}자동 모드: 프로덕션 허브 사용${NC}"
+        HUB_CHOICE="1"
+    else
+        echo -e "${YELLOW}프로덕션 허브에 연결하시겠습니까?${NC}"
+        echo "1) 예, 프로덕션 허브 사용 (mkt.techb.kr)"
+        echo "2) 아니오, 커스텀 허브 사용"
+        
+        if [ -t 0 ]; then
+            read -p "선택 [1-2]: " HUB_CHOICE
+        else
+            echo -e "${RED}대화형 입력 불가. 커스텀 허브 설정 사용${NC}"
+            HUB_CHOICE="2"
+        fi
+    fi
     
     if [ "$HUB_CHOICE" = "1" ]; then
         # 프로덕션 허브 설정 로드
@@ -410,9 +459,14 @@ elif [ ! -f ".env" ]; then
         fi
         
         # 허브 시크릿 입력
-        echo -e "${YELLOW}프로덕션 허브 시크릿 키를 입력하세요:${NC}"
-        read -s -p "HUB_SECRET: " HUB_SECRET_INPUT
-        echo
+        if [ "$AUTO_MODE" = true ] || [ ! -t 0 ]; then
+            echo -e "${YELLOW}허브 시크릿은 .env 파일에서 설정하세요.${NC}"
+            HUB_SECRET="your-hub-secret-key-here"
+        else
+            echo -e "${YELLOW}프로덕션 허브 시크릿 키를 입력하세요:${NC}"
+            read -s -p "HUB_SECRET: " HUB_SECRET_INPUT
+            echo
+        fi
         
         if [ -z "$HUB_SECRET_INPUT" ]; then
             echo -e "${RED}시크릿 키가 입력되지 않았습니다.${NC}"
