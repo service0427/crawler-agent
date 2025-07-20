@@ -28,11 +28,8 @@
 # 자동 설치 (대량 배포용)
 curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash -s -- --auto
 
-# 설치 후 허브 시크릿 설정
-cd ~/crawler-agent
-./setup-hub-secret.sh
-
 # 에이전트 실행
+cd ~/crawler-agent
 npm start
 
 # 에이전트 실행
@@ -54,9 +51,6 @@ curl -sL https://raw.githubusercontent.com/service0427/crawler-agent/main/instal
 
 # 또는 자동 설치 (모든 기본값 사용)
 curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash -s -- --auto
-
-# 허브 시크릿 설정
-./setup-hub-secret.sh
 
 # 2. 에이전트 실행
 cd ~/crawler-agent

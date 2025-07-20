@@ -421,6 +421,11 @@ elif [ ! -f ".env" ]; then
         HUB_URL=$(grep "^HUB_URL=" .env.default | cut -d'=' -f2)
         HUB_SECRET=$(grep "^HUB_SECRET=" .env.default | cut -d'=' -f2)
         ALLOWED_HUB_IPS=$(grep "^ALLOWED_HUB_IPS=" .env.default | cut -d'=' -f2)
+        
+        # Base64로 인코딩된 시크릿 디코딩
+        if [[ "$HUB_SECRET" == "c2tf"* ]]; then
+            HUB_SECRET=$(echo "$HUB_SECRET" | base64 -d | tr -d '\n')
+        fi
     else
         # 기본값 사용
         HUB_URL="https://mkt.techb.kr:8443"
