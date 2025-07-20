@@ -408,10 +408,13 @@ if [ "$UPDATE_MODE" = true ] && [ "$BACKUP_ENV" = true ]; then
 elif [ ! -f ".env" ]; then
     echo "기본 .env 파일 생성 중..."
     
-    # 에이전트 ID 랜덤 생성
-    RANDOM_ID=$(openssl rand -hex 4 2>/dev/null || echo $RANDOM$RANDOM)
-    AGENT_ID="agent-${RANDOM_ID}"
-    echo -e "${GREEN}✓ 에이전트 ID 자동 생성: $AGENT_ID${NC}"
+    # 에이전트 ID 설정 (.env.default에서 기본값 가져와서 포트 추가)
+    if [ -f ".env.default" ]; then
+        BASE_AGENT_ID=$(grep "^AGENT_ID=" .env.default | cut -d'=' -f2)
+    fi
+    BASE_AGENT_ID=${BASE_AGENT_ID:-"server"}
+    AGENT_ID="${BASE_AGENT_ID}_${PORT}"
+    echo -e "${GREEN}✓ 에이전트 ID 설정: $AGENT_ID${NC}"
     
     # .env.default에서 허브 설정 로드
     echo -e "${YELLOW}프로덕션 허브 설정 적용 중...${NC}"

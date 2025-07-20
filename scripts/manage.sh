@@ -67,11 +67,19 @@ show_status() {
 
 start_single_agent() {
     echo -e "${YELLOW}단일 에이전트 시작 중...${NC}"
-    DISPLAY=${DISPLAY:-:0} nohup node src/index.js > logs/agent.log 2>&1 &
+    
+    # .env에서 기본 AGENT_ID 읽어오기
+    local base_agent_id="server"
+    if [ -f ".env" ]; then
+        base_agent_id=$(grep "^AGENT_ID=" .env | cut -d'=' -f2 | sed 's/_[0-9]*$//')
+    fi
+    local agent_id="${base_agent_id}_3001"
+    
+    AGENT_ID=$agent_id DISPLAY=${DISPLAY:-:0} nohup node src/index.js > logs/agent.log 2>&1 &
     sleep 2
     
     if check_agent_status 3001 > /dev/null; then
-        echo -e "${GREEN}✓ 에이전트가 성공적으로 시작되었습니다${NC}"
+        echo -e "${GREEN}✓ 에이전트 ${agent_id}가 성공적으로 시작되었습니다${NC}"
     else
         echo -e "${RED}✗ 에이전트 시작 실패${NC}"
         echo "자세한 내용은 logs/agent.log를 확인하세요"
@@ -83,8 +91,12 @@ start_multi_agents() {
     
     for i in {1..4}; do
         local port=$((3000 + i))
-        local random_id=$(openssl rand -hex 4 2>/dev/null || echo $RANDOM$i)
-        local agent_id="agent-${random_id}"
+        # .env에서 기본 AGENT_ID 읽어오기
+        local base_agent_id="server"
+        if [ -f "$PROJECT_DIR/.env" ]; then
+            base_agent_id=$(grep "^AGENT_ID=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | sed 's/_[0-9]*$//')
+        fi
+        local agent_id="${base_agent_id}_${port}"
         
         echo -n "포트 $port에서 에이전트 $agent_id 시작... "
         
