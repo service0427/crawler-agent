@@ -471,10 +471,10 @@ async function registerToHub() {
     
     console.log(`Attempting to register agent to hub at ${HUB_URL}`);
     console.log(`Using Hub Secret: ${HUB_SECRET.substring(0, 20)}...`);
-    console.log(`Agent details: name=agent-${os.hostname()}-${PORT}, host=${localIP}, port=${PORT}`);
+    console.log(`Agent details: name=${AGENT_ID}, host=${localIP}, port=${PORT}`);
     
     const response = await axios.post(`${HUB_URL}/api/agent/register`, {
-      name: `agent-${os.hostname()}-${PORT}`,
+      name: AGENT_ID,
       host: localIP,
       port: parseInt(PORT),
       version: '1.0.0',
