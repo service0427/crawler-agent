@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=크롤러 에이전트 관리자
+Name[en]=Crawler Agent Manager
+Comment=웹 크롤러 에이전트를 관리하는 도구입니다
+Comment[en]=Tool for managing web crawler agents
+Icon=applications-system
+Exec=/home/tech/crawler/agent/scripts/manage.sh
+Terminal=true
+Type=Application
+Categories=System;Monitor;
+Keywords=crawler;agent;web;scraping;관리;에이전트;
+StartupNotify=true

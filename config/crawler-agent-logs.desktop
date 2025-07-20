@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=크롤러 에이전트 로그
+Name[en]=Crawler Agent Logs
+Comment=크롤러 에이전트 로그를 실시간으로 확인합니다
+Comment[en]=View crawler agent logs in real-time
+Icon=text-x-generic
+Exec=gnome-terminal -- bash -c 'cd /home/tech/crawler/agent && echo "크롤러 에이전트 로그 (Ctrl+C로 종료)" && tail -f logs/*.log'
+Terminal=false
+Type=Application
+Categories=System;Monitor;
+Keywords=crawler;agent;logs;로그;모니터링;
+StartupNotify=true

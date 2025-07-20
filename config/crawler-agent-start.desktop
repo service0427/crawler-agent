@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=크롤러 에이전트 시작
+Name[en]=Start Crawler Agents
+Comment=모든 크롤러 에이전트를 시작합니다 (4개)
+Comment[en]=Start all crawler agents (4 instances)
+Icon=media-playback-start
+Exec=sh -c 'cd /home/tech/crawler/agent && PORT=3001 AGENT_ID=1 DISPLAY=${DISPLAY:-:0} nohup node src/index.js > logs/agent1.log 2>&1 & PORT=3002 AGENT_ID=2 DISPLAY=${DISPLAY:-:0} nohup node src/index.js > logs/agent2.log 2>&1 & PORT=3003 AGENT_ID=3 DISPLAY=${DISPLAY:-:0} nohup node src/index.js > logs/agent3.log 2>&1 & PORT=3004 AGENT_ID=4 DISPLAY=${DISPLAY:-:0} nohup node src/index.js > logs/agent4.log 2>&1 & notify-send "크롤러 에이전트" "4개 에이전트가 시작되었습니다"'
+Terminal=false
+Type=Application
+Categories=System;Network;
+Keywords=crawler;agent;start;시작;
+StartupNotify=true

@@ -1,0 +1,42 @@
+{
+  "agent": {
+    "port": 3001,
+    "bindAddress": "0.0.0.0",
+    "agentId": "agent-1",
+    "version": "1.0.0"
+  },
+  "hub": {
+    "url": "https://localhost:8443",
+    "heartbeatInterval": 10000,
+    "registrationRetryInterval": 10000,
+    "rejectUnauthorized": false
+  },
+  "browser": {
+    "headless": false,
+    "channel": "chrome",
+    "args": [
+      "--disable-setuid-sandbox",
+      "--disable-blink-features=AutomationControlled",
+      "--disable-features=AutomationControlled"
+    ],
+    "userDataDir": "./data/users",
+    "cdpPortOffset": 1000
+  },
+  "workflows": {
+    "directory": "./src/workflows",
+    "maxConcurrent": 2,
+    "timeout": 300000
+  },
+  "logging": {
+    "level": "info",
+    "directory": "./logs",
+    "maxSize": "10m",
+    "maxFiles": 5,
+    "datePattern": "YYYY-MM-DD"
+  },
+  "paths": {
+    "data": "./data",
+    "logs": "./logs",
+    "pids": "./logs"
+  }
+}

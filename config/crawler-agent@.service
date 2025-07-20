@@ -1,0 +1,38 @@
+[Unit]
+Description=Web Crawler Agent Service (Instance %i)
+Documentation=https://github.com/yourusername/crawler-agent
+After=network.target
+
+[Service]
+Type=simple
+User=tech
+Group=tech
+WorkingDirectory=/home/tech/crawler/agent
+Environment="NODE_ENV=production"
+Environment="DISPLAY=:0"
+Environment="PATH=/usr/bin:/usr/local/bin"
+Environment="PORT=%i"
+Environment="AGENT_ID=agent-%i"
+
+# 인스턴스별 에이전트 실행
+ExecStart=/usr/bin/node /home/tech/crawler/agent/src/index.js
+
+# 자동 재시작 설정
+Restart=always
+RestartSec=10
+
+# 로그 설정 (인스턴스별)
+StandardOutput=append:/home/tech/crawler/agent/logs/systemd-agent%i.log
+StandardError=append:/home/tech/crawler/agent/logs/systemd-agent%i-error.log
+
+# 리소스 제한 (선택사항)
+MemoryLimit=1G
+CPUQuota=50%
+
+# 프로세스 관리
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

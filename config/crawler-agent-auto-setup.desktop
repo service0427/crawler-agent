@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=크롤러 자동 시작 설정
+Name[en]=Crawler Auto-Start Setup
+Comment=부팅 시 크롤러 에이전트 자동 시작을 설정합니다
+Comment[en]=Configure crawler agents to start automatically on boot
+Icon=preferences-system
+Exec=gnome-terminal -- bash -c 'cd /home/tech/crawler/agent && ./scripts/auto-setup.sh manual && echo && echo "계속하려면 Enter를 누르세요..." && read'
+Terminal=false
+Type=Application
+Categories=System;Settings;
+Keywords=crawler;agent;auto;start;setup;자동;시작;설정;
+StartupNotify=true

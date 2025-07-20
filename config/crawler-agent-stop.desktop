@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=크롤러 에이전트 정지
+Name[en]=Stop Crawler Agents
+Comment=모든 크롤러 에이전트를 정지합니다
+Comment[en]=Stop all crawler agents
+Icon=media-playback-stop
+Exec=sh -c 'pkill -f "node.*src/index.js"; notify-send "크롤러 에이전트" "모든 에이전트가 정지되었습니다"'
+Terminal=false
+Type=Application
+Categories=System;Network;
+Keywords=crawler;agent;stop;정지;
+StartupNotify=true
