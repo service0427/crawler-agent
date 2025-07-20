@@ -31,11 +31,10 @@ curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install
 # 설치 중:
 # - 기존 설치 발견 시 선택 옵션 제공
 # - 에이전트 ID 입력 프롬프트
+# - 프로덕션 허브 사용 여부 선택
 # - Google Chrome 자동 설치
 
-# 설치 후 허브 설정
 cd ~/crawler-agent
-nano .env  # HUB_URL과 HUB_SECRET을 실제 값으로 변경
 
 # 에이전트 실행
 ./scripts/manage.sh
@@ -88,11 +87,10 @@ curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install
 # 설치 중 입력 항목:
 # - 기존 설치 발견 시: 업데이트(1) 또는 새 디렉토리(2) 선택
 # - 에이전트 ID: 기본값 또는 사용자 정의 ID 입력
+# - 프로덕션 허브 사용: 예(1) 또는 커스텀 허브(2) 선택
 
-# 2. 허브 연결 설정 (필수!)
+# 2. 에이전트 실행 (프로덕션 허브 선택 시 바로 실행 가능)
 cd ~/crawler-agent
-nano .env
-# HUB_URL과 HUB_SECRET을 실제 값으로 수정
 
 # 3. 에이전트 실행
 ./scripts/manage.sh  # 메뉴에서 원하는 옵션 선택

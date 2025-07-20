@@ -392,6 +392,46 @@ elif [ ! -f ".env" ]; then
     
     echo -e "${GREEN}✓ 에이전트 ID: $AGENT_ID${NC}"
     
+    # 프로덕션 환경 사용 여부 확인
+    echo -e "${YELLOW}프로덕션 허브에 연결하시겠습니까?${NC}"
+    echo "1) 예, 프로덕션 허브 사용 (mkt.techb.kr)"
+    echo "2) 아니오, 커스텀 허브 사용"
+    read -p "선택 [1-2]: " HUB_CHOICE
+    
+    if [ "$HUB_CHOICE" = "1" ]; then
+        # 프로덕션 허브 설정 로드
+        if [ -f "./hub-config.sh" ]; then
+            source ./hub-config.sh
+            HUB_URL="$PROD_HUB_URL"
+            ALLOWED_HUB_IPS="$PROD_HUB_IPS"
+        else
+            HUB_URL="https://mkt.techb.kr:8443"
+            ALLOWED_HUB_IPS="mkt.techb.kr,220.78.239.115"
+        fi
+        
+        # 허브 시크릿 입력
+        echo -e "${YELLOW}프로덕션 허브 시크릿 키를 입력하세요:${NC}"
+        read -s -p "HUB_SECRET: " HUB_SECRET_INPUT
+        echo
+        
+        if [ -z "$HUB_SECRET_INPUT" ]; then
+            echo -e "${RED}시크릿 키가 입력되지 않았습니다.${NC}"
+            echo "설치 후 .env 파일에서 수정하세요."
+            HUB_SECRET="your-hub-secret-key-here"
+        else
+            HUB_SECRET="$HUB_SECRET_INPUT"
+            echo -e "${GREEN}✓ 허브 시크릿 설정 완료${NC}"
+        fi
+        
+        echo -e "${GREEN}✓ 프로덕션 허브 설정 적용${NC}"
+    else
+        # 커스텀 허브 설정
+        HUB_URL="https://your-hub-domain.com:8443"
+        HUB_SECRET="your-hub-secret-key"
+        ALLOWED_HUB_IPS="your-hub-domain.com,your-hub-ip"
+        echo -e "${YELLOW}설치 후 .env 파일에서 허브 설정을 수정하세요.${NC}"
+    fi
+    
     # .env 파일 생성
     cat > .env << EOF
 # Agent Configuration
@@ -400,8 +440,9 @@ AGENT_ID=$AGENT_ID
 BIND_ADDRESS=0.0.0.0
 
 # Hub Connection
-HUB_URL=https://your-hub-domain.com:8443
-HUB_SECRET=your-hub-secret-key
+HUB_URL=$HUB_URL
+HUB_SECRET=$HUB_SECRET
+ALLOWED_HUB_IPS=$ALLOWED_HUB_IPS
 
 # Browser Settings
 HEADLESS=false
@@ -420,7 +461,7 @@ HEARTBEAT_INTERVAL=10000
 USER_DATA_DIR=./data/users
 LOG_DIR=./logs
 EOF
-    echo -e "${GREEN}✓ 기본 .env 파일 생성 완료${NC}"
+    echo -e "${GREEN}✓ .env 파일 생성 완료${NC}"
 else
     echo -e "${GREEN}✓ .env 파일 이미 존재함${NC}"
 fi
@@ -472,16 +513,26 @@ else
     echo -e "${GREEN}        설치가 완료되었습니다!${NC}"
     echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
     echo
-    echo -e "${YELLOW}다음 단계:${NC}"
-    echo "1. 환경 설정 확인:"
-    echo "   nano .env  # HUB_SECRET을 실제 키로 변경"
-    echo
-    echo "2. 에이전트 실행:"
+    if [ "$HUB_CHOICE" = "1" ]; then
+        echo -e "${GREEN}✓ 프로덕션 허브 설정 완료${NC}"
+        echo -e "${YELLOW}설정된 허브 정보:${NC}"
+        echo "- 허브 URL: $HUB_URL"
+        echo "- 에이전트 ID: $AGENT_ID"
+        echo
+        echo -e "${YELLOW}다음 단계:${NC}"
+        echo "1. 에이전트 실행:"
+    else
+        echo -e "${YELLOW}다음 단계:${NC}"
+        echo "1. 허브 설정 확인:"
+        echo "   nano .env  # HUB_URL과 HUB_SECRET을 실제 값으로 변경"
+        echo
+        echo "2. 에이전트 실행:"
+    fi
     echo "   npm start"
     echo "   # 또는"
     echo "   ./scripts/manage.sh"
     echo
-    echo "3. 멀티 에이전트 실행:"
+    echo "2. 멀티 에이전트 실행:"
     echo "   ./scripts/manage.sh"
     echo "   # 메뉴에서 3번 선택"
     echo
