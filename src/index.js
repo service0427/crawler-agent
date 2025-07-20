@@ -8,7 +8,12 @@ const mcpIntegration = require('./mcp/mcp-integration');
 const { withRetry, isNetworkError } = require('./utils/retry');
 
 const PORT = process.env.PORT || process.argv[2] || 3001;
-const AGENT_ID = process.env.AGENT_ID || 1;
+// AGENT_ID에 포트 번호가 없으면 자동으로 추가
+let AGENT_ID = process.env.AGENT_ID || 'agent-1';
+// 끝에 _숫자 패턴이 없으면 포트 추가
+if (!AGENT_ID.match(/_\d+$/)) {
+    AGENT_ID = `${AGENT_ID}_${PORT}`;
+}
 const HUB_SECRET = process.env.HUB_SECRET || 'your-hub-secret-key';
 const ALLOWED_HUB_IPS = process.env.ALLOWED_HUB_IPS ? process.env.ALLOWED_HUB_IPS.split(',') : ['localhost', '127.0.0.1'];
 
