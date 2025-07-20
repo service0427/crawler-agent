@@ -24,46 +24,86 @@ fi
 INSTALL_DIR="${HOME}/crawler-agent"
 SOURCE_SERVER="220.78.239.115:8080"
 
-echo -e "${YELLOW}1. 기본 패키지 설치 중...${NC}"
+echo -e "${YELLOW}1. Node.js 설치 확인 중...${NC}"
 
-# 시스템 업데이트 및 기본 패키지 설치
+# Node.js가 이미 설치되어 있는지 확인
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node -v | cut -d'v' -f2 2>/dev/null)
+    NODE_MAJOR=$(echo $NODE_VERSION | cut -d'.' -f1)
+    
+    if [ $NODE_MAJOR -ge 18 ]; then
+        echo -e "${GREEN}✓ Node.js v$NODE_VERSION이 이미 설치되어 있습니다.${NC}"
+    else
+        echo -e "${YELLOW}Node.js v$NODE_VERSION이 설치되어 있지만 버전이 낮습니다.${NC}"
+        echo -e "${YELLOW}Node.js v18 이상이 필요합니다. 업데이트를 진행합니다...${NC}"
+        
+        # Node.js 업데이트
+        if command -v apt-get &> /dev/null; then
+            curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        elif command -v yum &> /dev/null; then
+            curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
+            sudo yum install -y nodejs npm
+        elif command -v dnf &> /dev/null; then
+            curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
+            sudo dnf install -y nodejs npm
+        fi
+    fi
+else
+    echo -e "${YELLOW}Node.js가 설치되어 있지 않습니다. 설치를 진행합니다...${NC}"
+    
+    # Node.js 설치
+    if command -v apt-get &> /dev/null; then
+        curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    elif command -v yum &> /dev/null; then
+        curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
+        sudo yum install -y nodejs npm
+    elif command -v dnf &> /dev/null; then
+        curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
+        sudo dnf install -y nodejs npm
+    else
+        echo -e "${RED}지원되지 않는 패키지 매니저입니다.${NC}"
+        exit 1
+    fi
+fi
+
+echo -e "${YELLOW}2. 기본 패키지 설치 중...${NC}"
+
+# 시스템 업데이트 및 기본 패키지 설치 (Node.js 제외)
 if command -v apt-get &> /dev/null; then
     # Ubuntu/Debian
     sudo apt-get update
-    sudo apt-get install -y curl wget git unzip nodejs npm chromium-browser
+    sudo apt-get install -y curl wget git unzip chromium-browser
 elif command -v yum &> /dev/null; then
     # CentOS/RHEL
     sudo yum update -y
-    sudo yum install -y curl wget git unzip nodejs npm chromium
+    sudo yum install -y curl wget git unzip chromium
 elif command -v dnf &> /dev/null; then
     # Fedora
     sudo dnf update -y
-    sudo dnf install -y curl wget git unzip nodejs npm chromium
-else
-    echo -e "${RED}지원되지 않는 패키지 매니저입니다.${NC}"
-    exit 1
+    sudo dnf install -y curl wget git unzip chromium
 fi
 
-echo -e "${YELLOW}2. Node.js 버전 확인 중...${NC}"
+echo -e "${YELLOW}3. Node.js 버전 최종 확인 중...${NC}"
 
-# Node.js 버전 확인
+# Node.js 버전 최종 확인
 NODE_VERSION=$(node -v | cut -d'v' -f2 2>/dev/null)
 if [ -z "$NODE_VERSION" ]; then
-    echo -e "${RED}Node.js가 설치되지 않았습니다.${NC}"
-    echo "Node.js를 먼저 설치해주세요."
+    echo -e "${RED}Node.js 설치에 실패했습니다.${NC}"
     exit 1
 fi
 
 NODE_MAJOR=$(echo $NODE_VERSION | cut -d'.' -f1)
 if [ $NODE_MAJOR -lt 18 ]; then
-    echo -e "${RED}Node.js 버전이 너무 낮습니다: v$NODE_VERSION${NC}"
-    echo "Node.js v18 이상을 설치해주세요."
+    echo -e "${RED}Node.js 버전이 여전히 낮습니다: v$NODE_VERSION${NC}"
+    echo "Node.js v18 이상이 필요합니다."
     exit 1
 fi
 
 echo -e "${GREEN}✓ Node.js v$NODE_VERSION 확인됨${NC}"
 
-echo -e "${YELLOW}3. 에이전트 파일 다운로드 중...${NC}"
+echo -e "${YELLOW}4. 에이전트 파일 다운로드 중...${NC}"
 
 # 설치 디렉토리 생성
 mkdir -p "$INSTALL_DIR"
@@ -119,7 +159,7 @@ fi
 
 echo -e "${GREEN}✓ 소스 파일 다운로드 완료${NC}"
 
-echo -e "${YELLOW}4. 의존성 설치 중...${NC}"
+echo -e "${YELLOW}5. 의존성 설치 중...${NC}"
 
 # npm 의존성 설치
 npm install
@@ -129,7 +169,7 @@ npx playwright install chromium
 
 echo -e "${GREEN}✓ 의존성 설치 완료${NC}"
 
-echo -e "${YELLOW}5. 환경 설정 중...${NC}"
+echo -e "${YELLOW}6. 환경 설정 중...${NC}"
 
 # .env 파일 생성
 cat > .env << EOF
@@ -165,7 +205,7 @@ mkdir -p logs data/users
 
 echo -e "${GREEN}✓ 환경 설정 완료${NC}"
 
-echo -e "${YELLOW}6. 권한 설정 중...${NC}"
+echo -e "${YELLOW}7. 권한 설정 중...${NC}"
 
 # 스크립트 실행 권한 부여
 chmod +x scripts/*.sh
