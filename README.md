@@ -22,44 +22,41 @@
 
 ## 빠른 시작
 
-### 방법 1: 원격 설치 (가장 빠름)
+### 원격 설치 (curl 사용)
 
 ```bash
 # 원격 스크립트로 자동 설치
 curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash
 
-# 설치 후 환경 설정
+# 설치 중:
+# - 기존 설치 발견 시 선택 옵션 제공
+# - 에이전트 ID 입력 프롬프트
+# - Google Chrome 자동 설치
+
+# 설치 후 허브 설정
 cd ~/crawler-agent
-cp .env.example .env
-nano .env  # HUB_SECRET을 실제 키로 변경
+nano .env  # HUB_URL과 HUB_SECRET을 실제 값으로 변경
 
 # 에이전트 실행
 ./scripts/manage.sh
 ```
 
-### 방법 2: Git 클론 후 설치
+### 기타 설치 방법
 
+<details>
+<summary>클릭하여 확장</summary>
+
+#### Git Clone 설치
 ```bash
 # 저장소 클론
 git clone https://github.com/service0427/crawler-agent.git
 cd crawler-agent
 
-# 빠른 설치 (모든 의존성 자동 설치)
-chmod +x install-quick.sh
+# 설치 스크립트 실행
 ./install-quick.sh
-
-# 환경 설정
-cp .env.example .env
-nano .env  # HUB_SECRET을 실제 키로 변경
-
-# 에이전트 실행
-npm start
-# 또는 관리 도구 사용
-./scripts/manage.sh
 ```
 
-### Windows
-
+#### Windows
 ```powershell
 # 저장소 클론
 git clone https://github.com/service0427/crawler-agent.git
@@ -76,6 +73,7 @@ notepad .env  # HUB_SECRET을 실제 키로 변경
 # 에이전트 실행
 npm start
 ```
+</details>
 
 ## 🚀 실제 배포용 빠른 가이드
 
@@ -84,18 +82,22 @@ npm start
 ### Linux 서버에 배포
 
 ```bash
-# 1. 자동 설치
+# 1. 자동 설치 (curl 명령 하나로 모든 것을 설치)
 curl -s https://raw.githubusercontent.com/service0427/crawler-agent/main/install-quick.sh | bash
 
-# 2. 환경 설정 (필수!)
+# 설치 중 입력 항목:
+# - 기존 설치 발견 시: 업데이트(1) 또는 새 디렉토리(2) 선택
+# - 에이전트 ID: 기본값 또는 사용자 정의 ID 입력
+
+# 2. 허브 연결 설정 (필수!)
 cd ~/crawler-agent
-cp .env.example .env
-nano .env  # 아래 HUB_SECRET 수정
+nano .env
+# HUB_URL과 HUB_SECRET을 실제 값으로 수정
 
-# 3. 멀티 에이전트 실행
-./scripts/manage.sh  # 메뉴에서 3번 선택
+# 3. 에이전트 실행
+./scripts/manage.sh  # 메뉴에서 원하는 옵션 선택
 
-# 4. 서비스로 등록 (선택)
+# 4. 서비스로 등록 (선택사항)
 sudo ./scripts/systemd-setup.sh install-multi
 ```
 

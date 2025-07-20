@@ -231,34 +231,37 @@ fi
 
 # 에이전트 소스 다운로드
 echo "소스 파일 다운로드 중..."
-curl -f -o crawler-agent.tar.gz "http://${SOURCE_SERVER}/crawler-agent.tar.gz" || {
-    echo -e "${YELLOW}소스 파일 다운로드 실패, GitHub에서 다운로드 시도 중...${NC}"
-    
-    # GitHub에서 직접 클론
-    if command -v git &> /dev/null; then
-        git clone https://github.com/service0427/crawler-agent.git temp-clone
-        if [ -d "temp-clone" ]; then
-            mv temp-clone/* . 2>/dev/null || true
-            mv temp-clone/.* . 2>/dev/null || true
-            rm -rf temp-clone
-            echo -e "${GREEN}✓ GitHub에서 다운로드 완료${NC}"
-        else
-            echo -e "${RED}GitHub 클론 실패${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${RED}Git이 설치되지 않았습니다.${NC}"
-        echo "다음 방법을 사용하세요:"
-        echo "1. Git 설치 후 재시도"
-        echo "2. 수동으로 클론: git clone https://github.com/service0427/crawler-agent.git"
-        exit 1
-    fi
+
+# GitHub에서 직접 tar.gz 다운로드
+GITHUB_RELEASE_URL="https://github.com/service0427/crawler-agent/archive/refs/heads/main.tar.gz"
+echo "GitHub에서 다운로드 중..."
+curl -L -f -o crawler-agent.tar.gz "$GITHUB_RELEASE_URL" || {
+    echo -e "${RED}소스 파일 다운로드 실패${NC}"
+    echo -e "${YELLOW}네트워크 연결을 확인하고 다시 시도하세요.${NC}"
+    echo "또는 수동으로 다운로드:"
+    echo "wget https://github.com/service0427/crawler-agent/archive/refs/heads/main.tar.gz"
+    exit 1
 }
 
-# 압축 해제 (tar.gz 파일이 있는 경우만)
+# 압축 해제
 if [ -f "crawler-agent.tar.gz" ]; then
-    tar -xzf crawler-agent.tar.gz --strip-components=1
+    echo "압축 해제 중..."
+    # GitHub tar.gz는 디렉토리 구조가 다름 (crawler-agent-main)
+    tar -xzf crawler-agent.tar.gz
+    
+    # 추출된 디렉토리 확인 및 파일 이동
+    if [ -d "crawler-agent-main" ]; then
+        # 파일들을 현재 디렉토리로 이동
+        mv crawler-agent-main/* . 2>/dev/null || true
+        mv crawler-agent-main/.* . 2>/dev/null || true
+        rm -rf crawler-agent-main
+    fi
+    
     rm crawler-agent.tar.gz
+    echo -e "${GREEN}✓ 압축 해제 완료${NC}"
+else
+    echo -e "${RED}다운로드된 파일이 없습니다.${NC}"
+    exit 1
 fi
 
 # 업데이트 모드인 경우 파일 비교 및 선택적 복사
