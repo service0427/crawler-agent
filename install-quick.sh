@@ -408,83 +408,27 @@ if [ "$UPDATE_MODE" = true ] && [ "$BACKUP_ENV" = true ]; then
 elif [ ! -f ".env" ]; then
     echo "기본 .env 파일 생성 중..."
     
-    # 에이전트 ID 설정
-    HOSTNAME=$(hostname)
-    DEFAULT_AGENT_ID="agent-${HOSTNAME}-$(date +%s | tail -c 5)"
+    # 에이전트 ID 랜덤 생성
+    RANDOM_ID=$(openssl rand -hex 4 2>/dev/null || echo $RANDOM$RANDOM)
+    AGENT_ID="agent-${RANDOM_ID}"
+    echo -e "${GREEN}✓ 에이전트 ID 자동 생성: $AGENT_ID${NC}"
     
-    if [ "$AUTO_MODE" = true ]; then
-        AGENT_ID="$DEFAULT_AGENT_ID"
-        echo -e "${YELLOW}자동 모드: 에이전트 ID = $AGENT_ID${NC}"
+    # .env.default에서 허브 설정 로드
+    echo -e "${YELLOW}프로덕션 허브 설정 적용 중...${NC}"
+    
+    if [ -f ".env.default" ]; then
+        # .env.default에서 허브 설정 추출
+        HUB_URL=$(grep "^HUB_URL=" .env.default | cut -d'=' -f2)
+        HUB_SECRET=$(grep "^HUB_SECRET=" .env.default | cut -d'=' -f2)
+        ALLOWED_HUB_IPS=$(grep "^ALLOWED_HUB_IPS=" .env.default | cut -d'=' -f2)
     else
-        echo -e "${YELLOW}에이전트 ID를 설정하세요.${NC}"
-        echo "여러 위치에서 설치하는 경우 각각 다른 ID를 사용해야 합니다."
-        
-        if [ -t 0 ]; then
-            read -p "에이전트 ID [기본값: $DEFAULT_AGENT_ID]: " AGENT_ID_INPUT
-            AGENT_ID="${AGENT_ID_INPUT:-$DEFAULT_AGENT_ID}"
-        else
-            echo -e "${RED}대화형 입력 불가. 기본값 사용: $DEFAULT_AGENT_ID${NC}"
-            AGENT_ID="$DEFAULT_AGENT_ID"
-        fi
+        # 기본값 사용
+        HUB_URL="https://mkt.techb.kr:8443"
+        HUB_SECRET="your-hub-secret-key-here"
+        ALLOWED_HUB_IPS="mkt.techb.kr,220.78.239.115"
     fi
     
-    echo -e "${GREEN}✓ 에이전트 ID: $AGENT_ID${NC}"
-    
-    # 프로덕션 환경 사용 여부 확인
-    if [ "$AUTO_MODE" = true ]; then
-        echo -e "${YELLOW}자동 모드: 프로덕션 허브 사용${NC}"
-        HUB_CHOICE="1"
-    else
-        echo -e "${YELLOW}프로덕션 허브에 연결하시겠습니까?${NC}"
-        echo "1) 예, 프로덕션 허브 사용 (mkt.techb.kr)"
-        echo "2) 아니오, 커스텀 허브 사용"
-        
-        if [ -t 0 ]; then
-            read -p "선택 [1-2]: " HUB_CHOICE
-        else
-            echo -e "${RED}대화형 입력 불가. 커스텀 허브 설정 사용${NC}"
-            HUB_CHOICE="2"
-        fi
-    fi
-    
-    if [ "$HUB_CHOICE" = "1" ]; then
-        # 프로덕션 허브 설정 로드
-        if [ -f "./hub-config.sh" ]; then
-            source ./hub-config.sh
-            HUB_URL="$PROD_HUB_URL"
-            ALLOWED_HUB_IPS="$PROD_HUB_IPS"
-        else
-            HUB_URL="https://mkt.techb.kr:8443"
-            ALLOWED_HUB_IPS="mkt.techb.kr,220.78.239.115"
-        fi
-        
-        # 허브 시크릿 입력
-        if [ "$AUTO_MODE" = true ] || [ ! -t 0 ]; then
-            echo -e "${YELLOW}허브 시크릿은 .env 파일에서 설정하세요.${NC}"
-            HUB_SECRET="your-hub-secret-key-here"
-        else
-            echo -e "${YELLOW}프로덕션 허브 시크릿 키를 입력하세요:${NC}"
-            read -s -p "HUB_SECRET: " HUB_SECRET_INPUT
-            echo
-        fi
-        
-        if [ -z "$HUB_SECRET_INPUT" ]; then
-            echo -e "${RED}시크릿 키가 입력되지 않았습니다.${NC}"
-            echo "설치 후 .env 파일에서 수정하세요."
-            HUB_SECRET="your-hub-secret-key-here"
-        else
-            HUB_SECRET="$HUB_SECRET_INPUT"
-            echo -e "${GREEN}✓ 허브 시크릿 설정 완료${NC}"
-        fi
-        
-        echo -e "${GREEN}✓ 프로덕션 허브 설정 적용${NC}"
-    else
-        # 커스텀 허브 설정
-        HUB_URL="https://your-hub-domain.com:8443"
-        HUB_SECRET="your-hub-secret-key"
-        ALLOWED_HUB_IPS="your-hub-domain.com,your-hub-ip"
-        echo -e "${YELLOW}설치 후 .env 파일에서 허브 설정을 수정하세요.${NC}"
-    fi
+    echo -e "${GREEN}✓ 허브 설정 자동 적용 완료${NC}"
     
     # .env 파일 생성
     cat > .env << EOF

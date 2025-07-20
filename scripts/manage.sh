@@ -83,9 +83,12 @@ start_multi_agents() {
     
     for i in {1..4}; do
         local port=$((3000 + i))
-        echo -n "포트 $port에서 에이전트 $i 시작... "
+        local random_id=$(openssl rand -hex 4 2>/dev/null || echo $RANDOM$i)
+        local agent_id="agent-${random_id}"
         
-        PORT=$port AGENT_ID=$i DISPLAY=${DISPLAY:-:0} nohup node src/index.js > logs/agent$i.log 2>&1 &
+        echo -n "포트 $port에서 에이전트 $agent_id 시작... "
+        
+        PORT=$port AGENT_ID=$agent_id DISPLAY=${DISPLAY:-:0} nohup node src/index.js > logs/agent$i.log 2>&1 &
         sleep 1
         
         if check_agent_status $port > /dev/null; then
@@ -145,17 +148,21 @@ view_logs() {
 }
 
 configure_agent() {
-    echo -e "${YELLOW}환경 설정:${NC}"
+    echo -e "${YELLOW}AGENT_ID 변경:${NC}"
     echo "────────────────────────────────────────"
     
     if [ -f .env ]; then
-        echo -e "${GREEN}현재 설정 (.env):${NC}"
-        cat .env | grep -E "^[^#]" | sed 's/=.*$/=***/'
+        echo -e "${GREEN}현재 설정:${NC}"
+        echo "허브 URL: $(grep HUB_URL .env | cut -d'=' -f2)"
+        echo "현재 AGENT_ID: $(grep AGENT_ID .env | cut -d'=' -f2)"
         echo
-        echo ".env 파일을 편집하여 설정을 변경하세요"
+        echo ".env 파일을 편집하여 AGENT_ID를 변경하세요"
+        read -p "Enter키를 눌러 편집기를 열거나 Ctrl+C로 취소: "
+        nano .env
+        echo -e "${GREEN}✓ 설정이 업데이트되었습니다${NC}"
     else
         echo -e "${RED}.env 파일을 찾을 수 없습니다!${NC}"
-        echo ".env.example을 .env로 복사하고 설정하세요"
+        echo "설치 스크립트를 먼저 실행하세요"
     fi
 }
 
@@ -169,8 +176,7 @@ show_menu() {
     echo "4) 모든 에이전트 정지"
     echo "5) 모든 에이전트 재시작"
     echo "6) 로그 보기"
-    echo "7) 환경 설정"
-    echo "8) 의존성 설치/업데이트"
+    echo "7) AGENT_ID 변경"
     echo "0) 종료"
     echo
     read -p "선택하세요: " choice
@@ -202,7 +208,6 @@ main() {
                 ;;
             6) view_logs ;;
             7) configure_agent ;;
-            8) install_update ;;
             0) 
                 echo "안녕히가세요!"
                 exit 0

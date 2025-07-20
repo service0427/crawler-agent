@@ -14,6 +14,10 @@ log/
 .env
 .env.local
 .env.*.local
+# Keep .env.default for distribution
+!.env.default
+# Secret setup script
+setup-hub-secret.sh
 
 # User data
 data/
