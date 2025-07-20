@@ -1,3 +1,4 @@
+// 재시도 유틸리티 - 네트워크 요청 안정성 향상
 async function withRetry(fn, options = {}) {
   const {
     maxAttempts = 3,
@@ -15,15 +16,12 @@ async function withRetry(fn, options = {}) {
     } catch (error) {
       lastError = error;
       
-      // 마지막 시도이거나 재시도하지 않아야 하는 에러인 경우
       if (attempt === maxAttempts || !shouldRetry(error)) {
         throw error;
       }
       
-      // 재시도 콜백 실행
       onRetry(error, attempt);
       
-      // 지수 백오프로 대기
       const waitTime = delay * Math.pow(backoff, attempt - 1);
       console.log(`[RETRY] Attempt ${attempt}/${maxAttempts} failed. Waiting ${waitTime}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -42,17 +40,7 @@ function isNetworkError(error) {
          error.message.includes('network');
 }
 
-// HTTP 상태 코드가 재시도 가능한지 확인
-function isRetryableStatusCode(statusCode) {
-  return statusCode === 408 || // Request Timeout
-         statusCode === 429 || // Too Many Requests
-         statusCode === 502 || // Bad Gateway
-         statusCode === 503 || // Service Unavailable
-         statusCode === 504;   // Gateway Timeout
-}
-
 module.exports = {
   withRetry,
-  isNetworkError,
-  isRetryableStatusCode
+  isNetworkError
 };
