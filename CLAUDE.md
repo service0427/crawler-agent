@@ -39,7 +39,7 @@ This is a distributed web crawler agent that communicates with an external hub s
 - Reports status to Hub (ready, navigating, completed, error)
 
 ### Hub Connection
-- Hub URL: Configured in .env (e.g., https://mkt.techb.kr:8443)
+- Hub URL: Configured in .env (e.g., https://your-hub-domain.com:8443)
 - Authentication: X-API-Key header with secret from .env
 - Automatic re-registration on 404 errors
 - HTTPS with self-signed certificate support

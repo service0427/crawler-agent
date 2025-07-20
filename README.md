@@ -2,6 +2,8 @@
 
 분산 웹 크롤러 시스템의 에이전트 구성요소입니다. Playwright를 사용하여 Chrome 브라우저를 자동화하고, 중앙 허브와 통신하여 크롤링 작업을 수행합니다.
 
+> **Note**: 이 프로젝트는 활발히 개발 중입니다. 최신 업데이트는 [GitHub Releases](https://github.com/service0427/crawler-agent/releases)를 확인하세요.
+
 ## 주요 기능
 
 - **브라우저 자동화**: Playwright 기반 Chrome 브라우저 제어
@@ -76,6 +78,8 @@ npm start
 
 ## 🚀 실제 배포용 빠른 가이드
 
+> **보안 주의**: 실제 배포 시 반드시 `.env` 파일의 기본값을 변경하고, 적절한 방화벽 규칙을 설정하세요.
+
 ### Linux 서버에 배포
 
 ```bash
@@ -104,7 +108,7 @@ PORT=3001                    # 에이전트 포트
 AGENT_ID=agent-1            # 고유 에이전트 ID
 
 # 허브 연결
-HUB_URL=https://mkt.techb.kr:8443     # 허브 URL
+HUB_URL=https://your-hub-domain.com:8443     # 허브 URL
 HUB_SECRET=your-hub-secret-key        # 인증 키 (실제 키로 교체 필요)
 
 # 브라우저 설정

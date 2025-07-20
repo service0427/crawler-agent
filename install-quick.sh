@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 웹 크롤러 에이전트 빠른 설치 스크립트
-# 사용법: curl -s 220.78.239.115:8080/install-quick.sh | bash
+# 사용법: curl -s YOUR_SERVER_IP:8080/install-quick.sh | bash
 
 # 색상 정의
 RED='\033[0;31m'
@@ -22,7 +22,35 @@ fi
 
 # 설치 디렉토리 설정
 INSTALL_DIR="${HOME}/crawler-agent"
-SOURCE_SERVER="220.78.239.115:8080"
+SOURCE_SERVER="YOUR_SERVER_IP:8080"
+
+# 기존 설치 확인
+EXISTING_INSTALL=false
+UPDATE_MODE=false
+BACKUP_ENV=false
+
+if [ -d "$INSTALL_DIR" ]; then
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${YELLOW}        기존 설치 감지됨 - 업데이트 모드로 진행${NC}" 
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+    EXISTING_INSTALL=true
+    UPDATE_MODE=true
+    
+    # 기존 .env 파일 백업
+    if [ -f "$INSTALL_DIR/.env" ]; then
+        echo -e "${YELLOW}기존 .env 파일 백업 중...${NC}"
+        cp "$INSTALL_DIR/.env" "$INSTALL_DIR/.env.backup.$(date +%Y%m%d_%H%M%S)"
+        BACKUP_ENV=true
+    fi
+    
+    # 실행 중인 에이전트 확인
+    RUNNING_AGENTS=$(pgrep -f "node.*src/index.js" | wc -l)
+    if [ $RUNNING_AGENTS -gt 0 ]; then
+        echo -e "${YELLOW}⚠️  실행 중인 에이전트 $RUNNING_AGENTS개 발견${NC}"
+        echo "업데이트 후 에이전트를 재시작해야 합니다."
+        echo
+    fi
+fi
 
 echo -e "${YELLOW}1. Node.js 설치 확인 중...${NC}"
 
@@ -103,11 +131,22 @@ fi
 
 echo -e "${GREEN}✓ Node.js v$NODE_VERSION 확인됨${NC}"
 
-echo -e "${YELLOW}4. 에이전트 파일 다운로드 중...${NC}"
+if [ "$UPDATE_MODE" = true ]; then
+    echo -e "${YELLOW}4. 에이전트 파일 업데이트 중...${NC}"
+else
+    echo -e "${YELLOW}4. 에이전트 파일 다운로드 중...${NC}"
+fi
 
 # 설치 디렉토리 생성
 mkdir -p "$INSTALL_DIR"
 cd "$INSTALL_DIR"
+
+# 업데이트 모드인 경우 임시 디렉토리 사용
+if [ "$UPDATE_MODE" = true ]; then
+    TEMP_DIR="${INSTALL_DIR}/temp_update_$(date +%Y%m%d_%H%M%S)"
+    mkdir -p "$TEMP_DIR"
+    cd "$TEMP_DIR"
+fi
 
 # 에이전트 소스 다운로드
 echo "소스 파일 다운로드 중..."
@@ -141,6 +180,64 @@ if [ -f "crawler-agent.tar.gz" ]; then
     rm crawler-agent.tar.gz
 fi
 
+# 업데이트 모드인 경우 파일 비교 및 선택적 복사
+if [ "$UPDATE_MODE" = true ]; then
+    echo -e "${YELLOW}변경된 파일 확인 및 업데이트 중...${NC}"
+    
+    # 중요 파일들 업데이트 (항상 덮어쓰기)
+    CORE_FILES=(
+        "src/index.js"
+        "src/workflows/"
+        "scripts/"
+        "config/"
+        "icons/"
+        "package.json"
+        "README.md"
+        "CLAUDE.md"
+        "dev-workflow.js"
+    )
+    
+    # 파일들을 원본 디렉토리로 복사
+    for file in "${CORE_FILES[@]}"; do
+        if [ -e "$file" ]; then
+            echo "업데이트: $file"
+            if [ -d "$file" ]; then
+                # 디렉토리인 경우
+                rm -rf "$INSTALL_DIR/$file"
+                cp -r "$file" "$INSTALL_DIR/"
+            else
+                # 파일인 경우
+                cp "$file" "$INSTALL_DIR/"
+            fi
+        fi
+    done
+    
+    # .env.example만 복사 (기존 .env는 보존)
+    if [ -f ".env.example" ]; then
+        cp ".env.example" "$INSTALL_DIR/"
+    fi
+    
+    # .gitignore 업데이트
+    if [ -f ".gitignore" ]; then
+        cp ".gitignore" "$INSTALL_DIR/"
+    fi
+    
+    # package.json 변경 확인
+    PACKAGE_CHANGED=false
+    if ! cmp -s "package.json" "$INSTALL_DIR/package.json" 2>/dev/null; then
+        PACKAGE_CHANGED=true
+        echo -e "${YELLOW}package.json 변경 감지됨 - 의존성 업데이트 필요${NC}"
+    fi
+    
+    # 임시 디렉토리 정리
+    cd "$INSTALL_DIR"
+    rm -rf "$TEMP_DIR"
+    
+    echo -e "${GREEN}✓ 파일 업데이트 완료${NC}"
+else
+    echo -e "${GREEN}✓ 소스 파일 다운로드 완료${NC}"
+fi
+
 # scripts 폴더 존재 확인
 if [ ! -d "scripts" ]; then
     echo -e "${RED}scripts 폴더가 없습니다. 패키지에 문제가 있을 수 있습니다.${NC}"
@@ -157,29 +254,55 @@ if [ ! -d "scripts" ]; then
     fi
 fi
 
-echo -e "${GREEN}✓ 소스 파일 다운로드 완료${NC}"
+echo -e "${YELLOW}5. 의존성 확인 및 설치 중...${NC}"
 
-echo -e "${YELLOW}5. 의존성 설치 중...${NC}"
+# package.json 존재 확인
+if [ ! -f "package.json" ]; then
+    echo -e "${RED}package.json 파일이 없습니다.${NC}"
+    exit 1
+fi
 
-# npm 의존성 설치
-npm install
-
-# Playwright 브라우저 설치
-npx playwright install chromium
-
-echo -e "${GREEN}✓ 의존성 설치 완료${NC}"
+# 업데이트 모드에서 package.json이 변경되지 않았다면 의존성 설치 건너뛰기
+if [ "$UPDATE_MODE" = true ] && [ "$PACKAGE_CHANGED" = false ] && [ -d "node_modules" ]; then
+    echo -e "${GREEN}✓ 의존성에 변경사항 없음 - 설치 건너뛰기${NC}"
+else
+    echo "npm 의존성 설치 중..."
+    npm install
+    
+    # Playwright 브라우저 확인 및 설치
+    if [ "$UPDATE_MODE" = true ]; then
+        # 업데이트 모드에서는 Playwright 브라우저가 이미 있는지 확인
+        if command -v playwright &> /dev/null && playwright browsers list | grep -q "chromium"; then
+            echo -e "${GREEN}✓ Playwright 브라우저 이미 설치됨${NC}"
+        else
+            echo "Playwright 브라우저 설치 중..."
+            npx playwright install chromium
+        fi
+    else
+        echo "Playwright 브라우저 설치 중..."
+        npx playwright install chromium
+    fi
+    
+    echo -e "${GREEN}✓ 의존성 설치 완료${NC}"
+fi
 
 echo -e "${YELLOW}6. 환경 설정 중...${NC}"
 
-# .env 파일 생성
-cat > .env << EOF
+# .env 파일 처리
+if [ "$UPDATE_MODE" = true ] && [ "$BACKUP_ENV" = true ]; then
+    echo -e "${GREEN}✓ 기존 .env 파일 보존됨${NC}"
+    echo -e "${YELLOW}새로운 설정은 .env.example을 참고하세요${NC}"
+elif [ ! -f ".env" ]; then
+    echo "기본 .env 파일 생성 중..."
+    # .env 파일 생성
+    cat > .env << EOF
 # Agent Configuration
 PORT=3001
 AGENT_ID=agent-1
 BIND_ADDRESS=0.0.0.0
 
 # Hub Connection
-HUB_URL=https://mkt.techb.kr:8443
+HUB_URL=https://your-hub-domain.com:8443
 HUB_SECRET=your-hub-secret-key
 
 # Browser Settings
@@ -199,6 +322,10 @@ HEARTBEAT_INTERVAL=10000
 USER_DATA_DIR=./data/users
 LOG_DIR=./logs
 EOF
+    echo -e "${GREEN}✓ 기본 .env 파일 생성 완료${NC}"
+else
+    echo -e "${GREEN}✓ .env 파일 이미 존재함${NC}"
+fi
 
 # 필요한 디렉토리 생성
 mkdir -p logs data/users
@@ -213,26 +340,58 @@ chmod +x scripts/*.sh
 echo -e "${GREEN}✓ 권한 설정 완료${NC}"
 
 echo
-echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}        설치가 완료되었습니다!${NC}"
-echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
-echo
-echo -e "${YELLOW}다음 단계:${NC}"
-echo "1. 환경 설정 확인:"
-echo "   nano .env"
-echo
-echo "2. 에이전트 실행:"
-echo "   npm start"
-echo "   # 또는"
-echo "   ./scripts/manage.sh"
-echo
-echo "3. 멀티 에이전트 실행:"
-echo "   ./scripts/manage.sh"
-echo "   # 메뉴에서 3번 선택"
-echo
-echo "4. 서비스로 등록 (선택사항):"
-echo "   sudo ./scripts/systemd-setup.sh install-multi"
-echo
+if [ "$UPDATE_MODE" = true ]; then
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}        업데이트가 완료되었습니다!${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    echo
+    
+    if [ $RUNNING_AGENTS -gt 0 ]; then
+        echo -e "${YELLOW}⚠️  실행 중인 에이전트 재시작 필요:${NC}"
+        echo "1. 현재 실행 중인 에이전트 정지:"
+        echo "   ./scripts/manage.sh  # 메뉴에서 4번 선택 (모든 에이전트 정지)"
+        echo
+        echo "2. 에이전트 재시작:"
+        echo "   ./scripts/manage.sh  # 메뉴에서 3번 선택 (다중 에이전트 시작)"
+        echo
+    else
+        echo -e "${YELLOW}다음 단계:${NC}"
+        echo "1. 에이전트 실행:"
+        echo "   ./scripts/manage.sh  # 메뉴에서 3번 선택"
+        echo
+    fi
+    
+    if [ "$BACKUP_ENV" = true ]; then
+        echo -e "${YELLOW}참고:${NC}"
+        echo "- 기존 .env 설정이 보존되었습니다"
+        echo "- 새로운 설정 옵션은 .env.example을 확인하세요"
+        echo "- .env 백업 파일들: .env.backup.*"
+        echo
+    fi
+    
+else
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}        설치가 완료되었습니다!${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    echo
+    echo -e "${YELLOW}다음 단계:${NC}"
+    echo "1. 환경 설정 확인:"
+    echo "   nano .env  # HUB_SECRET을 실제 키로 변경"
+    echo
+    echo "2. 에이전트 실행:"
+    echo "   npm start"
+    echo "   # 또는"
+    echo "   ./scripts/manage.sh"
+    echo
+    echo "3. 멀티 에이전트 실행:"
+    echo "   ./scripts/manage.sh"
+    echo "   # 메뉴에서 3번 선택"
+    echo
+    echo "4. 서비스로 등록 (선택사항):"
+    echo "   sudo ./scripts/systemd-setup.sh install-multi"
+    echo
+fi
+
 echo -e "${BLUE}설치 경로: ${INSTALL_DIR}${NC}"
 echo -e "${BLUE}로그 파일: ${INSTALL_DIR}/logs/${NC}"
 echo

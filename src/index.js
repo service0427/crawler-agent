@@ -3,6 +3,7 @@ const { chromium } = require('playwright');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const mcpIntegration = require('./mcp/mcp-integration');
 
 const PORT = process.env.PORT || process.argv[2] || 3001;
 const AGENT_ID = process.env.AGENT_ID || 1;
@@ -404,6 +405,9 @@ async function start() {
   if (browserReady) {
     console.log(`Agent ${AGENT_ID} browser ready on CDP port ${cdpPort}`);
     
+    // MCP 통합 초기화
+    await mcpIntegration.initialize();
+    
     // HTTP 서버 시작 (허브 통신용)
     const BIND_ADDRESS = process.env.BIND_ADDRESS || '0.0.0.0';
     app.listen(PORT, BIND_ADDRESS, () => {
@@ -585,6 +589,8 @@ process.on('SIGTERM', async () => {
   if (browser) {
     await browser.close();
   }
+  // MCP 서버 종료
+  await mcpIntegration.shutdown();
   process.exit();
 });
 

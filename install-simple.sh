@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 간단한 에이전트 설치 스크립트 (scripts 없이도 동작)
-# 사용법: curl -s 220.78.239.115:8080/install-simple.sh | bash
+# 사용법: curl -s YOUR_SERVER_IP:8080/install-simple.sh | bash
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -24,7 +24,7 @@ fi
 
 echo -e "${YELLOW}2. 소스 다운로드...${NC}"
 # 개별 파일 다운로드
-curl -o package.json "http://220.78.239.115:8080/package.json" 2>/dev/null || {
+curl -o package.json "http://YOUR_SERVER_IP:8080/package.json" 2>/dev/null || {
     echo "package.json 생성..."
     cat > package.json << 'EOF'
 {
@@ -56,8 +56,8 @@ cat > .env << 'EOF'
 PORT=3001
 AGENT_ID=agent-1
 BIND_ADDRESS=0.0.0.0
-HUB_URL=https://mkt.techb.kr:8443
-HUB_SECRET=your-hub-secret-key
+HUB_URL=https://your-hub-domain.com:8443
+HUB_SECRET=your-hub-secret-key-here
 HEADLESS=false
 DISPLAY=:0
 LOG_LEVEL=info
@@ -74,9 +74,9 @@ echo "1. src/index.js 파일을 직접 복사하거나 다운로드"
 echo "2. src/workflows/ 폴더 내용 복사"
 echo
 echo "scp 사용 예시:"
-echo "scp user@220.78.239.115:/home/tech/crawler/agent/src/index.js src/"
-echo "scp -r user@220.78.239.115:/home/tech/crawler/agent/src/workflows/* src/workflows/"
+echo "scp user@YOUR_SERVER_IP:/home/tech/crawler/agent/src/index.js src/"
+echo "scp -r user@YOUR_SERVER_IP:/home/tech/crawler/agent/src/workflows/* src/workflows/"
 echo
 echo "또는 전체 패키지 다운로드:"
-echo "curl -o agent.tar.gz http://220.78.239.115:8080/crawler-agent.tar.gz"
+echo "curl -o agent.tar.gz http://YOUR_SERVER_IP:8080/crawler-agent.tar.gz"
 echo "tar -xzf agent.tar.gz --strip-components=1"
