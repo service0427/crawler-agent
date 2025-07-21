@@ -259,6 +259,14 @@ module.exports = {
     log.success(`총 ${allProducts.length}개 상품 추출 완료`);
     log.separator();
     
+    // 작업 완료 후 about:blank로 이동
+    try {
+      await page.goto('about:blank');
+      log.info('Navigated to about:blank');
+    } catch (error) {
+      log.warn(`Failed to navigate to about:blank: ${error.message}`);
+    }
+
     return {
       keyword: keyword,
       count: allProducts.length,
