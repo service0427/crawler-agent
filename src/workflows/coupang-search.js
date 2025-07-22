@@ -165,9 +165,25 @@ module.exports = {
             
             // URL에서 rank 추출
             let rank = null;
+            let productId = null;
+            let itemId = null;
+            let vendorItemId = null;
+            
             if (href) {
               const rankMatch = href.match(/rank=(\d+)/);
               rank = rankMatch ? rankMatch[1] : null;
+              
+              // 상품 ID 추출 (URL 경로에서)
+              const productIdMatch = href.match(/\/vp\/products\/(\d+)/);
+              productId = productIdMatch ? productIdMatch[1] : null;
+              
+              // itemId 추출
+              const itemIdMatch = href.match(/itemId=(\d+)/);
+              itemId = itemIdMatch ? itemIdMatch[1] : null;
+              
+              // vendorItemId 추출
+              const vendorItemIdMatch = href.match(/vendorItemId=(\d+)/);
+              vendorItemId = vendorItemIdMatch ? vendorItemIdMatch[1] : null;
             }
             
             return {
@@ -176,6 +192,9 @@ module.exports = {
               href: linkElement ? 'https://www.coupang.com' + href : null,
               thumbnail: imgElement ? imgElement.getAttribute('src') : null,
               rank: rank,
+              productId: productId,
+              itemId: itemId,
+              vendorItemId: vendorItemId,
               realRank: null, // 실제 순위는 외부에서 설정
               page: null // 페이지 번호는 외부에서 설정
             };
@@ -261,7 +280,7 @@ module.exports = {
     
     // 작업 완료 후 about:blank로 이동
     try {
-      await page.goto('about:blank');
+      await page.goto('about:blank', { waitUntil: 'domcontentloaded' });
       log.info('Navigated to about:blank');
     } catch (error) {
       log.warn(`Failed to navigate to about:blank: ${error.message}`);
